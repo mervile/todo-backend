@@ -8,10 +8,13 @@ class SampleServiceActor extends Actor with SampleRoute {
 
 trait SampleRoute extends HttpService {
     val route = {
-        get {
-            path("stuff") {
+         path("stuff") {
+            get {
                 complete("That's my stuff!")
-            }
+            } ~
+              post {
+                  complete("stuff posted!")
+              }
         } ~ get {
             complete("I exist!")
         }
