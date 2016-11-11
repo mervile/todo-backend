@@ -58,11 +58,23 @@ trait SampleRoute extends HttpService {
                 } ~
                 post {
                     entity(as[Todo]) { todo =>
-                        val newTodo = Todo(scala.util.Random.nextInt, todo.description, todo.status)
-                        todos = todos :+ newTodo
-                        respondWithMediaType(MediaTypes.`application/json`) {
-                            complete {
-                                newTodo
+                        if (todo.id == -1) {
+                            // Create a new one
+                            val newTodo = Todo(scala.util.Random.nextInt, todo.description, todo.status)
+                            todos = todos :+ newTodo
+                            respondWithMediaType(MediaTypes.`application/json`) {
+                                complete {
+                                    newTodo
+                                }
+                            }
+                        } else {
+                            // Update old
+                            val index = todos.indexWhere(_.id == todo.id)
+                            todos = todos.updated(index, todo)
+                            respondWithMediaType(MediaTypes.`application/json`) {
+                                complete {
+                                    todo
+                                }
                             }
                         }
                     }
