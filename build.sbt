@@ -33,6 +33,8 @@ lazy val root = (project in file(".")).
             // -- config --
             "com.typesafe" % "config" % "1.2.1",
             // -- testing --
-            "org.scalatest" %% "scalatest" % "2.2.1" % "test"
+            "org.scalatest" %% "scalatest" % "2.2.1" % "test",
+            // MongoDB Scala driver
+            "org.mongodb" %% "casbah" % "3.1.1"
         )
 )

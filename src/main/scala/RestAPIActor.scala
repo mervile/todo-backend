@@ -1,27 +1,39 @@
-import akka.actor.Actor
+import akka.actor.{Actor, ActorSystem, Props}
 import spray.routing.HttpService
 import spray.http.HttpHeaders._ 
 
-class SampleServiceActor extends Actor with SampleRoute {
+import scala.concurrent.Await
+import scala.concurrent.Future
+import akka.pattern.ask
+import akka.util.Timeout
+import scala.concurrent.duration._
+
+class RestAPIActor extends Actor with Routes {
     def actorRefFactory = context
     def receive = runRoute(route)
 }
 
-trait SampleRoute extends HttpService {
+trait Routes extends HttpService {
     import spray.httpx.SprayJsonSupport._
     import Todo._
     import spray.http.MediaTypes
+
+    val system = ActorSystem("simple-service")
+    // default Actor constructor
+    val todoService = system.actorOf(Props[TodoServiceActor], name = "todoServiceActor")
 
     var todos = Seq(
         Todo(0, "Setup a dev environment", 2),
         Todo(1, "Learn React with Typescript", 1),
         Todo(2, "Setup unit tests, Karma + shallow rendering?", 2),
         Todo(3, "Use UI library e.g. Material UI", 2),
-        Todo(4, "Create small backend with Scala, Akka, Spray and some NoSQL DB", 1),
-        Todo(5, "Integrate app with backend", 1),
+        Todo(4, "Create small backend with Scala, Akka, Spray", 2),
+        Todo(5, "Integrate app with backend", 2),
         Todo(6, "Learn redux", 0),
         Todo(7, "Routing between states", 0),
-        Todo(8, "Add drag and drop feature for list items", 2)
+        Todo(8, "Add drag and drop feature for list items", 2),
+        Todo(9, "Save items in a database", 0),
+        Todo(10,"Delete a todo", 0)
     )
 
     def addHeaders = respondWithHeaders(
@@ -35,7 +47,10 @@ trait SampleRoute extends HttpService {
             path("todos") {
                 respondWithMediaType(MediaTypes.`application/json`) {
                     get {
-                        complete(todos)
+                        implicit val timeout = Timeout(5 seconds)
+                        val future = todoService ? Todos
+                        val todosList = Await.result(future, timeout.duration).asInstanceOf[List[Todo]]
+                        complete(todosList)
                     }
                 }
             } ~

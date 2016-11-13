@@ -4,7 +4,7 @@ import spray.can.Http
 
 object Main extends App {
     implicit val system = ActorSystem("simple-service")
-    val service = system.actorOf(Props[SampleServiceActor], "simple-service")
+    val service = system.actorOf(Props[RestAPIActor], "simple-service")
 
     //If we're on cloud foundry, get's the host/port from the env vars
     lazy val host = Option(System.getenv("VCAP_APP_HOST")).getOrElse("localhost")

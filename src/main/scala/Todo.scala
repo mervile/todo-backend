@@ -1,5 +1,7 @@
 import spray.json.DefaultJsonProtocol
 
+case object Todos
+
 case class Todo(id: Int, description: String, status: Int)
 
 object Todo extends DefaultJsonProtocol {
