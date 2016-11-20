@@ -1,8 +1,6 @@
 package my.todos
 
 import akka.actor.Actor
-import spray.json._
-import DefaultJsonProtocol._
 
 class TodoServiceActor extends Actor  {
     def receive = {

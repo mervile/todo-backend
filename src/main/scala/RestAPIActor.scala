@@ -22,7 +22,7 @@ trait Routes extends HttpService {
     val system = ActorSystem("simple-service")
     // default Actor constructor
     val todoService = system.actorOf(Props[TodoServiceActor], name = "todoServiceActor")
-    implicit val timeout = Timeout(5 seconds)
+    implicit val timeout = Timeout(10 seconds)
 
     def addHeaders = respondWithHeaders(
         RawHeader("Access-Control-Allow-Origin", "http://localhost:3000"),
@@ -35,9 +35,11 @@ trait Routes extends HttpService {
             path("todos") {
                 respondWithMediaType(MediaTypes.`application/json`) {
                     get {
-                        val future = todoService ? Todos
-                        val todosList = Await.result(future, timeout.duration).asInstanceOf[List[Todo]]
-                        complete(todosList)
+                        complete {
+                            val future = todoService ? Todos
+                            var todosList = Await.result(todoService ? Todos, timeout.duration).asInstanceOf[List[Todo]]
+                            todosList
+                        }
                     }
                 }
             } ~
