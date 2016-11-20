@@ -9,11 +9,11 @@ object MongoFactory {
 
     def findAll = (for (record <- collection.find()) yield(convertDbObjectToTodo(record))).toList
 
-    def findById(id: Int) = {
+    def findById(id: Int): Option[Todo] = {
         val opt = collection.findOne(MongoDBObject("id" -> id))
         opt match {
             case Some(value: DBObject) => Option(convertDbObjectToTodo(value))
-            case None => Option(None)
+            case None => None
         }
     }
 
@@ -25,6 +25,14 @@ object MongoFactory {
         println( "Number updated: " + result.getN )
         for (c <- collection.find) println(c)
         result
+    }
+
+    def delete(id: Int): Option[Todo] = {
+        val opt = collection.findAndRemove(MongoDBObject("id" -> id))
+        opt match {
+            case Some(value: DBObject) => Option(convertDbObjectToTodo(value))
+            case None => None
+        }
     }
 
     def convertDbObjectToTodo(obj: DBObject): Todo = {

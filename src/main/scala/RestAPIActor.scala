@@ -27,7 +27,7 @@ trait Routes extends HttpService {
     def addHeaders = respondWithHeaders(
         RawHeader("Access-Control-Allow-Origin", "http://localhost:3000"),
         RawHeader("Access-Control-Allow-Headers", "Content-Type"),
-        RawHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS"),
+        RawHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS, DELETE"),
         RawHeader("Access-Control-Max-Age", "86400"))
 
     val route = {
@@ -73,6 +73,21 @@ trait Routes extends HttpService {
                             complete {
                                 newTodo
                             }
+                        }
+                    }
+                } ~
+                delete {
+                    parameters('id.as[Int]) { (id) =>
+                        val future = todoService ? DeleteTodobyId(id)
+                        val deletedTodo = Await.result(future, timeout.duration).asInstanceOf[Option[Todo]]
+                        println("DELETED TODO", deletedTodo)
+                        deletedTodo match {
+                            case Some(value) => {
+                                respondWithMediaType(MediaTypes.`application/json`) {
+                                    complete(value)
+                                }
+                            }
+                            case None => complete(s"Todo with id $id not found!")
                         }
                     }
                 }

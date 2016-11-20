@@ -10,6 +10,7 @@ class TodoServiceActor extends Actor  {
             sender ! true
         }
         case FindTodobyId(id)         => sender ! MongoFactory.findById(id)
+        case DeleteTodobyId(id)       => sender ! MongoFactory.delete(id)
         case _                        => println("huh?")
     }
 }

@@ -10,6 +10,8 @@ case class CreateorUpdateTodo(todo: Todo)
 
 case class FindTodobyId(id: Int)
 
+case class DeleteTodobyId(id: Int)
+
 object Todo extends DefaultJsonProtocol {
     implicit val todoFormat = jsonFormat3(Todo.apply)
 }
