@@ -35,6 +35,8 @@ lazy val root = (project in file(".")).
             // -- testing --
             "org.scalatest" %% "scalatest" % "2.2.1" % "test",
             // MongoDB Scala driver
-            "org.mongodb" %% "casbah" % "3.1.1"
+            "org.mongodb" %% "casbah" % "3.1.1",
+            // Password hashing
+            "com.github.t3hnar" %% "scala-bcrypt" % "3.0"
         )
 )
