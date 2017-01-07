@@ -18,6 +18,9 @@ object MongoFactory {
 
   def findAll = (for (record <- collection.find()) yield (convertDbObjectToTodo(record))).toList
 
+  def findAllByUser(userId: String) = (
+    for (record <- collection.find(MongoDBObject("userId" -> userId))) yield (convertDbObjectToTodo(record))).toList
+
   def findById(id: Int): Option[Todo] = {
     val opt = collection.findOne(MongoDBObject("id" -> id))
     opt match {
@@ -47,7 +50,8 @@ object MongoFactory {
   def convertDbObjectToUser(obj: DBObject): ApiUser = {
     val username = obj.getAs[String]("username").getOrElse("")
     val hashedPassword = obj.getAs[String]("hashedPassword")
-    ApiUser(username, hashedPassword)
+    val id = obj.getAs[ObjectId]("_id").getOrElse("-1").toString()
+    ApiUser(username, hashedPassword, id)
   }
 
   def convertDbObjectToTodo(obj: DBObject): Todo = {

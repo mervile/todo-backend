@@ -41,8 +41,7 @@ trait Routes extends HttpService with Authenticator {
             respondWithMediaType(MediaTypes.`application/json`) {
               get {
                 complete {
-                  val future = todoService ? Todos
-                  var todosList = Await.result(todoService ? Todos, timeout.duration).asInstanceOf[List[Todo]]
+                  val todosList = Await.result(todoService ? Todos(authInfo.user.id), timeout.duration).asInstanceOf[List[Todo]]
                   todosList
                 }
               }

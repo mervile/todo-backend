@@ -11,9 +11,11 @@ import scala.concurrent.{ExecutionContext, Future}
   * Test user in Mongo: test/password
   * @param username
   * @param hashedPassword
+  * @param id
   */
 case class ApiUser(username: String,
-                   hashedPassword: Option[String] = None) {
+                   hashedPassword: Option[String] = None,
+                   id: String) {
   def withPassword(password: String) = copy(hashedPassword = Some(password.bcrypt(generateSalt)))
 
   def passwordMatches(password: String): Boolean = hashedPassword.exists(hp => BCrypt.checkpw(password, hp))

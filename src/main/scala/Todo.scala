@@ -2,7 +2,7 @@ package my.todos
 
 import spray.json.DefaultJsonProtocol
 
-case object Todos
+case class Todos(userId: String)
 
 case class Todo(id: Int, description: String, status: Int)
 

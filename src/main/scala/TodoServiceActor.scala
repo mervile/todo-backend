@@ -4,7 +4,7 @@ import akka.actor.Actor
 
 class TodoServiceActor extends Actor  {
     def receive = {
-        case Todos                    => sender ! MongoFactory.findAll
+        case Todos(userId)            => sender ! MongoFactory.findAllByUser(userId)
         case CreateorUpdateTodo(todo) => {
             MongoFactory.createOrUpdate(todo)
             sender ! true
