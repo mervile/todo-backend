@@ -31,7 +31,8 @@ object MongoFactory {
 
   def createOrUpdate(todo: Todo) = {
     val query = MongoDBObject("id" -> todo.id)
-    val update = $set("id" -> todo.id, "description" -> todo.description, "status" -> todo.status)
+    val update = $set("id" -> todo.id, "description" -> todo.description,
+      "status" -> todo.status, "userId" -> todo.userId)
     val result = collection.update(query, update, upsert = true)
 
     println("Number updated: " + result.getN)
@@ -58,6 +59,7 @@ object MongoFactory {
     val id = obj.getAs[Int]("id").getOrElse(0)
     val desc = obj.getAs[String]("description").getOrElse("?")
     val status = obj.getAs[Int]("status").getOrElse(0)
-    Todo(id, desc, status)
+    val userId = obj.getAs[String]("userId").getOrElse("?")
+    Todo(id, desc, status, userId)
   }
 }

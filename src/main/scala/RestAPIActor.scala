@@ -29,13 +29,16 @@ trait Routes extends HttpService with Authenticator {
 
   def addHeaders = respondWithHeaders(
     RawHeader("Access-Control-Allow-Origin", "http://localhost:3000"),
-    RawHeader("Access-Control-Allow-Headers", "Content-Type"),
+    RawHeader("Access-Control-Allow-Headers", "Content-Type, Authorization"),
     RawHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS, DELETE"),
     RawHeader("Access-Control-Max-Age", "86400"))
 
   val route = {
     addHeaders {
       pathPrefix("api") {
+        options {
+          complete("ok")
+        } ~
         authenticate(basicUserAuthenticator) { authInfo =>
           path("todos") {
             respondWithMediaType(MediaTypes.`application/json`) {
@@ -69,7 +72,7 @@ trait Routes extends HttpService with Authenticator {
               entity(as[Todo]) { todo =>
                 var newTodo = todo
                 if (todo.id == -1) {
-                  newTodo = Todo(scala.util.Random.nextInt, todo.description, todo.status)
+                  newTodo = Todo(scala.util.Random.nextInt, todo.description, todo.status, authInfo.user.id)
                 }
                 val future = todoService ? CreateorUpdateTodo(newTodo)
                 val success = Await.result(future, timeout.duration).asInstanceOf[Boolean]
