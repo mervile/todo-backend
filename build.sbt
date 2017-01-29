@@ -1,5 +1,5 @@
-val akka = "2.4.12"
-
+val akka = "2.4.16"
+val akkaHttpV = "10.0.1"
 val spray = "1.3.4"
 
 lazy val commonSettings = Seq(
@@ -24,16 +24,18 @@ lazy val root = (project in file(".")).
             "com.typesafe.akka" %% "akka-testkit" % akka % "test",
             "com.typesafe.akka" %% "akka-actor" % akka,
             "com.typesafe.akka" %% "akka-slf4j" % akka,
+            "com.typesafe.akka" %% "akka-http" % akkaHttpV,
             // -- Spray --
-            "io.spray" %% "spray-routing" % spray,
-            "io.spray" %% "spray-client" % spray,
-            "io.spray" %% "spray-testkit" % spray % "test",
+            // "io.spray" %% "spray-routing" % spray,
+            // "io.spray" %% "spray-client" % spray,
+            // "io.spray" %% "spray-testkit" % spray % "test",
             // -- json --
-            "io.spray" %% "spray-json" % "1.3.1",
+            "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpV,
             // -- config --
-            "com.typesafe" % "config" % "1.2.1",
+            "com.typesafe" % "config" % "1.3.1",
             // -- testing --
-            "org.scalatest" %% "scalatest" % "2.2.1" % "test",
+            "org.scalatest" %% "scalatest" % "3.0.1" % "test",
+            "com.typesafe.akka" %% "akka-http-testkit" % akkaHttpV % "test",
             // MongoDB Scala driver
             "org.mongodb" %% "casbah" % "3.1.1",
             // Password hashing

@@ -37,7 +37,7 @@ object MongoFactory {
 
     println("Number updated: " + result.getN)
     for (c <- collection.find) println(c)
-    result
+    result.getN
   }
 
   def delete(id: Int): Option[Todo] = {
@@ -56,6 +56,7 @@ object MongoFactory {
   }
 
   def convertDbObjectToTodo(obj: DBObject): Todo = {
+    // TODO use id given by db
     val id = obj.getAs[Int]("id").getOrElse(0)
     val desc = obj.getAs[String]("description").getOrElse("?")
     val status = obj.getAs[Int]("status").getOrElse(0)
