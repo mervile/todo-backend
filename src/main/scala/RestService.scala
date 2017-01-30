@@ -4,7 +4,7 @@ import akka.actor.ActorSystem
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.model.headers.RawHeader
 import akka.http.scaladsl.server.Directives._
-import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.server.{AuthenticationFailedRejection, RejectionHandler, Route, ValidationRejection}
 import akka.http.scaladsl.server.directives.Credentials
 import akka.stream.ActorMaterializer
 import akka.util.Timeout
@@ -37,39 +37,48 @@ trait RestService extends TodosJSONSupport {
       case _ => None
     }
 
+  val myRejectionHandler = RejectionHandler.newBuilder()
+    .handleNotFound { complete((StatusCodes.NotFound, "Oh man, what you are looking for is long gone.")) }
+    .handle {
+      case ValidationRejection(msg, _) => complete((StatusCodes.InternalServerError, msg))
+      case AuthenticationFailedRejection(msg, _) => complete(StatusCodes.Unauthorized)
+    }
+    .result()
+
   val users = mutable.Map[String, ApiUser]()
   val route: Route = {
-    addHeaders {
-      options {
-        complete(StatusCodes.OK)
-      } ~
-      pathPrefix("auth") {
-        path("login") {
-          post {
-            formFields('username.as[String], 'password.as[String]) { (username, password) =>
-              val maybeUser = (todoService ? FindUser(username)).mapTo[Option[ApiUser]]
-              onSuccess(maybeUser) {
-                case Some(user) if user.passwordMatches(password) =>
-                  val tokenGenerator = new BearerTokenGenerator
-                  val token = tokenGenerator.generateMD5Token(user.username)
-                  users += (token -> user)
-                  complete(LoginResponse(token, user.username))
-                case _ => complete(StatusCodes.Unauthorized)
+    handleRejections(myRejectionHandler) {
+      addHeaders {
+        options {
+          complete(StatusCodes.OK)
+        } ~
+        pathPrefix("auth") {
+          path("login") {
+            post {
+              formFields('username.as[String], 'password.as[String]) { (username, password) =>
+                val maybeUser = (todoService ? FindUser(username)).mapTo[Option[ApiUser]]
+                onSuccess(maybeUser) {
+                  case Some(user) if user.passwordMatches(password) =>
+                    val tokenGenerator = new BearerTokenGenerator
+                    val token = tokenGenerator.generateMD5Token(user.username)
+                    users += (token -> user)
+                    complete(LoginResponse(token, user.username))
+                  case _ => complete(StatusCodes.Unauthorized)
+                }
               }
             }
           }
-        }
-      } ~
-      authenticateOAuth2(realm = "secure site", myUserPassAuthenticator) { user =>
-        pathPrefix("api") {
-          path("todos") {
-            get {
-              onComplete((todoService ? Todos(user.id)).mapTo[List[Todo]]) {
-                case Success(todos)  => complete(todos)
-                case Failure(ex) => complete(StatusCodes.InternalServerError, s"An error occurred: ${ex.getMessage}")
+        } ~
+        authenticateOAuth2(realm = "secure site", myUserPassAuthenticator) { user =>
+          pathPrefix("api") {
+            path("todos") {
+              get {
+                onComplete((todoService ? Todos(user.id)).mapTo[List[Todo]]) {
+                  case Success(todos)  => complete(todos)
+                  case Failure(ex) => complete(StatusCodes.InternalServerError, s"An error occurred: ${ex.getMessage}")
+                }
               }
-            }
-          } ~
+            } ~
             path("todo") {
               post {
                 entity(as[Todo]) { todo =>
@@ -83,20 +92,21 @@ trait RestService extends TodosJSONSupport {
                   }
                 }
               } ~
-                delete {
-                  parameters('id.as[Int]) { (id) =>
-                    onComplete((todoService ? DeleteTodobyId(id)).mapTo[Option[Todo]]) {
-                      case Success(maybeDeleted) => {
-                        maybeDeleted match {
-                          case Some(deleted) => complete(StatusCodes.OK, deleted)
-                          case None          => complete(StatusCodes.NotFound, s"Couldn't find todo by id ${id}")
-                        }
+              delete {
+                parameters('id.as[Int]) { (id) =>
+                  onComplete((todoService ? DeleteTodobyId(id)).mapTo[Option[Todo]]) {
+                    case Success(maybeDeleted) => {
+                      maybeDeleted match {
+                        case Some(deleted) => complete(StatusCodes.OK, deleted)
+                        case None          => complete(StatusCodes.NotFound, s"Couldn't find todo by id ${id}")
                       }
-                      case Failure(ex) => complete(StatusCodes.InternalServerError, s"An error occurred: ${ex.getMessage}")
                     }
+                    case Failure(ex) => complete(StatusCodes.InternalServerError, s"An error occurred: ${ex.getMessage}")
                   }
                 }
+              }
             }
+          }
         }
       }
     }

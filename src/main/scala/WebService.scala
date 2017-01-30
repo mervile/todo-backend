@@ -13,13 +13,8 @@ class WebService(implicit val system: ActorSystem,
                  implicit val materializer: ActorMaterializer,
                  implicit val executionContext: ExecutionContext) extends RestService {
   def startServer(host: String, port: Int) = {
-    val bindingFuture = Http().bindAndHandle(route, host, port)
-    println(s"Waiting for requests at http://$host:$port/...\nHit RETURN to terminate")
-    StdIn.readLine()
-
-    //Shutdown
-    bindingFuture.flatMap(_.unbind())
-    system.terminate()
+    Http().bindAndHandle(route, host, port)
+    println(s"Waiting for requests at http://$host:$port/...\nType re-stop to terminate")
   }
 }
 
