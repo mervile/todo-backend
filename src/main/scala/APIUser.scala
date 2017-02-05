@@ -11,7 +11,7 @@ import org.mindrot.jbcrypt.BCrypt
   */
 case class ApiUser(username: String,
                    hashedPassword: Option[String] = None,
-                   id: String) {
+                   id: Option[String] = None) {
   def withPassword(password: String) = copy(hashedPassword = Some(password.bcrypt(generateSalt)))
 
   def passwordMatches(password: String): Boolean = hashedPassword.exists(hp => BCrypt.checkpw(password, hp))

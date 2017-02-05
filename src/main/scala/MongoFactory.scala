@@ -16,6 +16,17 @@ object MongoFactory {
     }
   }
 
+  def createUser(user: ApiUser): Unit = {
+    val query = MongoDBObject("_id" -> user.id)
+    val update = $set("username" -> user.username,
+      "hashedPassword" -> user.hashedPassword)
+    val result = userCollection.insert(query)
+
+    println("Created: " + result.getN)
+    for (c <- userCollection.find) println(c)
+    result.getN
+  }
+
   def findAll = (for (record <- collection.find()) yield (convertDbObjectToTodo(record))).toList
 
   def findAllByUser(userId: String) = (
@@ -52,7 +63,7 @@ object MongoFactory {
     val username = obj.getAs[String]("username").getOrElse("")
     val hashedPassword = obj.getAs[String]("hashedPassword")
     val id = obj.getAs[ObjectId]("_id").getOrElse("-1").toString()
-    ApiUser(username, hashedPassword, id)
+    ApiUser(username, hashedPassword, Some(id))
   }
 
   def convertDbObjectToTodo(obj: DBObject): Todo = {
