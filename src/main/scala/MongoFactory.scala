@@ -17,8 +17,7 @@ object MongoFactory {
   }
 
   def createUser(user: ApiUser): Unit = {
-    val query = MongoDBObject("_id" -> user.id)
-    val update = $set("username" -> user.username,
+    val query = MongoDBObject("username" -> user.username,
       "hashedPassword" -> user.hashedPassword)
     val result = userCollection.insert(query)
 
