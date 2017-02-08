@@ -19,7 +19,10 @@ case class LoginResponse(token_id: String, username: String)
 
 case class CreateUser(user: ApiUser)
 
+case class UsernameValidationResponse(username: String, isValid: Boolean)
+
 trait TodosJSONSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val todoFormat = jsonFormat4(Todo)
   implicit val loginResponseFormat = jsonFormat2(LoginResponse)
+  implicit val usernameValidationResponse = jsonFormat2(UsernameValidationResponse)
 }
