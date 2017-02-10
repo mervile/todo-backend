@@ -10,7 +10,9 @@ import akka.util.Timeout
 import akka.pattern.ask
 import com.github.t3hnar.bcrypt._
 import org.mindrot.jbcrypt.BCrypt
+import pdi.jwt.{Jwt, JwtAlgorithm, JwtClaim}
 
+import scala.collection.generic.SeqFactory
 import scala.collection.mutable
 import scala.concurrent.duration._
 import scala.util.{Failure, Success}
@@ -25,7 +27,10 @@ trait RestService extends TodosJSONSupport with CORS {
 
   def myUserPassAuthenticator(credentials: Credentials): Option[ApiUser] =
     credentials match {
-      case p @ Credentials.Provided(id) => users get id
+      case p @ Credentials.Provided(id) => {
+        if (Jwt.isValid(id, "secretKey", Seq(JwtAlgorithm.HS256))) users get id
+        else None
+      }
       case _ => None
     }
 
@@ -90,10 +95,10 @@ trait RestService extends TodosJSONSupport with CORS {
                     onSuccess((todoService ? FindUser(username)).mapTo[Option[ApiUser]]) { maybeUser =>
                       maybeUser match {
                         case Some(user) if user.passwordMatches(password) => {
-                          val tokenGenerator = new BearerTokenGenerator
-                          val token = tokenGenerator.generateMD5Token(user.username)
+                          val username = user.username
+                          val token = Jwt.encode(JwtClaim({s"""{"username":"$username"}"""}).issuedNow.expiresIn(60*60), "secretKey", JwtAlgorithm.HS256)
                           users += (token -> user)
-                          complete(LoginResponse(token, user.username))
+                          complete(LoginResponse(token))
                         }
                         case None => reject(AuthorizationFailedRejection)
                       }
