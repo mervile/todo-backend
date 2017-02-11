@@ -1,6 +1,7 @@
-package my.todos
+package my.todos.utils
 
 import com.mongodb.casbah.Imports._
+import my.todos.models.{ApiUser, Todo}
 
 object MongoFactory {
   // To directly connect to the default server localhost on port 27017

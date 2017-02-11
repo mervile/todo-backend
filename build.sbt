@@ -25,10 +25,6 @@ lazy val root = (project in file(".")).
             "com.typesafe.akka" %% "akka-actor" % akka,
             "com.typesafe.akka" %% "akka-slf4j" % akka,
             "com.typesafe.akka" %% "akka-http" % akkaHttpV,
-            // -- Spray --
-            // "io.spray" %% "spray-routing" % spray,
-            // "io.spray" %% "spray-client" % spray,
-            // "io.spray" %% "spray-testkit" % spray % "test",
             // -- json --
             "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpV,
             // -- config --

@@ -1,6 +1,9 @@
-package my.todos
+package my.todos.services
 
 import akka.actor.{Actor, ActorLogging, Props}
+
+import my.todos.models._
+import my.todos.utils.MongoFactory
 
 object TodoServiceActor {
   def props(): Props = {
@@ -14,8 +17,6 @@ class TodoServiceActor extends Actor with ActorLogging {
     case CreateorUpdateTodo(todo)  => sender ! MongoFactory.createOrUpdate(todo)
     case FindTodobyId(id)          => sender ! MongoFactory.findById(id)
     case DeleteTodobyId(id)        => sender ! MongoFactory.delete(id)
-    case FindUser(username)        => sender ! MongoFactory.findUser(username)
-    case CreateUser(user)          => sender ! MongoFactory.createUser(user)
     case _                         => println("huh?")
   }
 }
