@@ -27,6 +27,8 @@ case class CreateUser(user: ApiUser)
 
 case class UsernameValidationResponse(username: String, isValid: Boolean)
 
+case class UsernameExistsException() extends Exception
+
 trait UserJSONSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val loginResponseFormat = jsonFormat1(LoginResponse)
   implicit val usernameValidationResponse = jsonFormat2(UsernameValidationResponse)

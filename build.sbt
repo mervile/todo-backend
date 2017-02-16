@@ -37,6 +37,8 @@ lazy val root = (project in file(".")).
             // Password hashing
             "com.github.t3hnar" %% "scala-bcrypt" % "3.0",
             // JWT
-            "com.pauldijou" %% "jwt-core" % "0.10.0"
+            "com.pauldijou" %% "jwt-core" % "0.10.0",
+            // CORS
+            "ch.megard" %% "akka-http-cors" % "0.1.11"
         )
 )

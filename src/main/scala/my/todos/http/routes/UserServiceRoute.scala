@@ -20,11 +20,13 @@ class UserServiceRoute(val userService: ActorRef, val users: mutable.Map[String,
   val route: Route =
     pathPrefix("public") {
       path("validate-username") {
-        parameter('username.as[String]) { username =>
-          onSuccess((userService ? FindUser(username)).mapTo[Option[ApiUser]]) { maybeUser =>
-            maybeUser match {
-              case Some(_) => complete(StatusCodes.OK, UsernameValidationResponse(username, false))
-              case None => complete(StatusCodes.OK, UsernameValidationResponse(username, true))
+        pathEndOrSingleSlash {
+          parameter('username.as[String]) { username =>
+            onSuccess((userService ? FindUser(username)).mapTo[Option[ApiUser]]) { maybeUser =>
+              maybeUser match {
+                case Some(_) => complete(StatusCodes.OK, UsernameValidationResponse(username, false))
+                case None => complete(StatusCodes.OK, UsernameValidationResponse(username, true))
+              }
             }
           }
         }
@@ -32,15 +34,17 @@ class UserServiceRoute(val userService: ActorRef, val users: mutable.Map[String,
     } ~
     pathPrefix("auth") {
       path("register") {
-        post {
-          formFields('username, 'password) { (username, password) =>
-            onSuccess((userService ? FindUser(username)).mapTo[Option[ApiUser]]) { maybeUser =>
-              maybeUser match {
-                case Some(foundUser) => complete(StatusCodes.OK, "Username already exists")
-                case None => {
-                  val newUser = ApiUser(username, Some(password.bcrypt(generateSalt)))
-                  onSuccess(userService ? CreateUser(newUser)) { _ =>
-                    complete(StatusCodes.Created, newUser.username)
+        pathEndOrSingleSlash {
+          post {
+            formFields('username, 'password) { (username, password) =>
+              onSuccess((userService ? FindUser(username)).mapTo[Option[ApiUser]]) { maybeUser =>
+                maybeUser match {
+                  case Some(foundUser) => throw new UsernameExistsException
+                  case None => {
+                    val newUser = ApiUser(username, Some(password.bcrypt(generateSalt)))
+                    onSuccess(userService ? CreateUser(newUser)) { _ =>
+                      complete(StatusCodes.Created, newUser.username)
+                    }
                   }
                 }
               }
@@ -49,17 +53,19 @@ class UserServiceRoute(val userService: ActorRef, val users: mutable.Map[String,
         }
       } ~
       path("login") {
-        post {
-          formFields('username, 'password) { (username, password) =>
-            onSuccess((userService ? FindUser(username)).mapTo[Option[ApiUser]]) { maybeUser =>
-              maybeUser match {
-                case Some(user: ApiUser) if user.passwordMatches(password) => {
-                  val username = user.username
-                  val token = Jwt.encode(JwtClaim({s"""{"username":"$username"}"""}).issuedNow.expiresIn(60*60), "secretKey", JwtAlgorithm.HS256)
-                  users += (token -> user)
-                  complete(s"""{"token_id": "$token"}""")
+        pathEndOrSingleSlash {
+          post {
+            formFields('username, 'password) { (username, password) =>
+              onSuccess((userService ? FindUser(username)).mapTo[Option[ApiUser]]) { maybeUser =>
+                maybeUser match {
+                  case Some(user: ApiUser) if user.passwordMatches(password) => {
+                    val username = user.username
+                    val token = Jwt.encode(JwtClaim({s"""{"username":"$username"}"""}).issuedNow.expiresIn(60 * 60), "secretKey", JwtAlgorithm.HS256)
+                    users += (token -> user)
+                    complete(s"""{"token_id": "$token"}""")
+                  }
+                  case None => reject(AuthorizationFailedRejection)
                 }
-                case None => reject(AuthorizationFailedRejection)
               }
             }
           }

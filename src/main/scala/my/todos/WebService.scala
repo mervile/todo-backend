@@ -24,5 +24,5 @@ object WebService extends App {
   val restService = new RestService(todoService, userService)
 
   Http().bindAndHandle(restService.routes, "localhost", 8080)
-  println(s"Waiting for requests at my.todos.http://localhost:8080/...\nType re-stop to terminate")
+  println(s"Waiting for requests at http://localhost:8080/...\nType re-stop to terminate")
 }
