@@ -52,16 +52,16 @@ class TodoServiceRoute(val todoService: ActorRef, val users: mutable.Map[String,
                 }
               }
             } ~
-              delete {
-                parameters('id.as[Int]) { (id) =>
-                  onSuccess((todoService ? DeleteTodobyId(id)).mapTo[Option[Todo]]) { maybeDeleted =>
-                    maybeDeleted match {
-                      case Some(deleted) => complete(StatusCodes.OK, deleted)
-                      case None => complete(StatusCodes.NotFound, s"Couldn't find todo by id ${id}")
-                    }
+            delete {
+              parameters('id.as[Int]) { (id) =>
+                onSuccess((todoService ? DeleteTodobyId(id)).mapTo[Option[Todo]]) { maybeDeleted =>
+                  maybeDeleted match {
+                    case Some(deleted) => complete(StatusCodes.OK, deleted)
+                    case None => complete(StatusCodes.NotFound, s"Couldn't find todo by id ${id}")
                   }
                 }
               }
+            }
           }
         }
       }

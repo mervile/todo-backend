@@ -12,6 +12,10 @@ import my.todos.http.routes.{TodoServiceRoute, UserServiceRoute}
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext
 import ch.megard.akka.http.cors.CorsDirectives._
+import ch.megard.akka.http.cors.CorsSettings
+import akka.http.scaladsl.model.HttpMethods._
+
+import scala.collection.immutable.Seq
 
 class RestService(todoService: ActorRef, userService: ActorRef)
                  (implicit executionContext: ExecutionContext, implicit val timeout: Timeout) {
@@ -21,6 +25,8 @@ class RestService(todoService: ActorRef, userService: ActorRef)
   val todoRouter = new TodoServiceRoute(todoService, users)
 
   val rejectionHandler = corsRejectionHandler withFallback RejectionHandler.default
+
+  val settings = CorsSettings.defaultSettings.copy(allowedMethods = Seq(GET, POST, OPTIONS, DELETE))
 
   // Your exception handler
   val exceptionHandler = ExceptionHandler {
@@ -39,7 +45,7 @@ class RestService(todoService: ActorRef, userService: ActorRef)
   val handleErrors = handleRejections(rejectionHandler) & handleExceptions(exceptionHandler)
 
   val routes: Route =
-    cors() {
+    cors(settings) {
       handleErrors {
         userRouter.route ~
         todoRouter.route
