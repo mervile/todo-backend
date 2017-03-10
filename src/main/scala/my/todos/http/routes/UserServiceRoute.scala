@@ -8,14 +8,14 @@ import akka.pattern.ask
 import akka.util.Timeout
 import com.github.t3hnar.bcrypt.{generateSalt, _}
 import my.todos.models._
-import pdi.jwt.{Jwt, JwtAlgorithm, JwtClaim}
+import my.todos.utils.TodosJSONSupport
 
-import scala.collection.mutable
 import scala.concurrent.ExecutionContext
+import my.todos.utils.UserPassAuthenticator.createSession
 
-class UserServiceRoute(val userService: ActorRef, val users: mutable.Map[String, ApiUser])
+class UserServiceRoute(val userService: ActorRef)
                       (implicit executionContext: ExecutionContext, implicit val timeout: Timeout)
-  extends UserJSONSupport{
+  extends TodosJSONSupport{
 
   val route: Route =
     pathPrefix("public") {
@@ -59,9 +59,7 @@ class UserServiceRoute(val userService: ActorRef, val users: mutable.Map[String,
               onSuccess((userService ? FindUser(username)).mapTo[Option[ApiUser]]) { maybeUser =>
                 maybeUser match {
                   case Some(user: ApiUser) if user.passwordMatches(password) => {
-                    val username = user.username
-                    val token = Jwt.encode(JwtClaim({s"""{"username":"$username"}"""}).issuedNow.expiresIn(60 * 60), "secretKey", JwtAlgorithm.HS256)
-                    users += (token -> user)
+                    val token = createSession(user)
                     complete(s"""{"token_id": "$token"}""")
                   }
                   case None => reject(AuthorizationFailedRejection)

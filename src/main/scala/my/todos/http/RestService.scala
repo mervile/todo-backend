@@ -7,7 +7,7 @@ import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.{ExceptionHandler, RejectionHandler, Route}
 import akka.util.Timeout
 import my.todos.models._
-import my.todos.http.routes.{TodoServiceRoute, UserServiceRoute}
+import my.todos.http.routes.{ProjectServiceRoute, TodoServiceRoute, UserServiceRoute}
 
 import scala.collection.mutable
 import scala.concurrent.ExecutionContext
@@ -17,12 +17,12 @@ import akka.http.scaladsl.model.HttpMethods._
 
 import scala.collection.immutable.Seq
 
-class RestService(todoService: ActorRef, userService: ActorRef)
+class RestService(todoService: ActorRef, userService: ActorRef, projectService: ActorRef)
                  (implicit executionContext: ExecutionContext, implicit val timeout: Timeout) {
 
-  val users = mutable.Map[String, ApiUser]()
-  val userRouter = new UserServiceRoute(userService, users)
-  val todoRouter = new TodoServiceRoute(todoService, users)
+  val userRouter = new UserServiceRoute(userService)
+  val todoRouter = new TodoServiceRoute(todoService)
+  val projectRouter = new ProjectServiceRoute(todoService, projectService)
 
   val rejectionHandler = corsRejectionHandler withFallback RejectionHandler.default
 
@@ -37,7 +37,7 @@ class RestService(todoService: ActorRef, userService: ActorRef)
       }
     case e: Exception =>
       extractUri { uri =>
-        println(s"Request to $uri could not be handled normally")
+        println(s"Request to $uri could not be handled normally", e)
         complete(HttpResponse(StatusCodes.InternalServerError, entity = e.getLocalizedMessage))
       }
   }
@@ -48,7 +48,8 @@ class RestService(todoService: ActorRef, userService: ActorRef)
     cors(settings) {
       handleErrors {
         userRouter.route ~
-        todoRouter.route
+        todoRouter.route ~
+        projectRouter.route
       }
     }
 }

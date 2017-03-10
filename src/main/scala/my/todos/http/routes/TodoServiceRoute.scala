@@ -4,28 +4,17 @@ import akka.actor.ActorRef
 import akka.http.scaladsl.model.StatusCodes
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
-import akka.http.scaladsl.server.directives.Credentials
 import akka.pattern.ask
 import akka.util.Timeout
-import pdi.jwt.{Jwt, JwtAlgorithm}
 
-import scala.collection.mutable
 import scala.concurrent.ExecutionContext
-
 import my.todos.models._
+import my.todos.utils.TodosJSONSupport
+import my.todos.utils.UserPassAuthenticator.myUserPassAuthenticator
 
-class TodoServiceRoute(val todoService: ActorRef, val users: mutable.Map[String, ApiUser])
+class TodoServiceRoute(val todoService: ActorRef)
                       (implicit executionContext: ExecutionContext, implicit val timeout: Timeout)
   extends TodosJSONSupport{
-
-  def myUserPassAuthenticator(credentials: Credentials): Option[ApiUser] =
-    credentials match {
-      case p @ Credentials.Provided(id) => {
-        if (Jwt.isValid(id, "secretKey", Seq(JwtAlgorithm.HS256))) users get id
-        else None
-      }
-      case _ => None
-    }
 
   val route: Route =
     pathPrefix("api") {
