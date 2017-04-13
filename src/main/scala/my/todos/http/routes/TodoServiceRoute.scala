@@ -34,7 +34,8 @@ class TodoServiceRoute(val todoService: ActorRef)
               entity(as[Todo]) { todo =>
                 var newTodo = todo
                 if (todo.id == -1) {
-                  newTodo = Todo(scala.util.Random.nextInt, todo.description, todo.status, user.id.get)
+                  newTodo = Todo(scala.util.Random.nextInt, todo.description, todo.status,
+                    user.id.get, todo.projectId)
                 }
                 onSuccess((todoService ? CreateorUpdateTodo(newTodo))) { _ =>
                   complete(StatusCodes.Created, newTodo)

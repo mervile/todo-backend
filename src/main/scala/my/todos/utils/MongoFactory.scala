@@ -45,7 +45,7 @@ object MongoFactory {
   def createOrUpdate(todo: Todo) = {
     val query = MongoDBObject("id" -> todo.id)
     val update = $set("id" -> todo.id, "description" -> todo.description,
-      "status" -> todo.status, "userId" -> todo.userId)
+      "status" -> todo.status, "userId" -> todo.userId, "projectId" -> todo.projectId)
     val result = collection.update(query, update, upsert = true)
 
     println("Number updated: " + result.getN)
