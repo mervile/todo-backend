@@ -1,5 +1,6 @@
 package my.todos.utils
 
+import com.github.nscala_time.time.TypeImports
 import com.mongodb.casbah.Imports._
 import my.todos.models._
 
@@ -53,26 +54,40 @@ object MongoFactory {
     result.getN
   }
 
-  def createOrUpdateProject(project: Project) = {
-    val query = MongoDBObject("id" -> project.id)
-    val update = $set("id" -> project.id, "title" -> project.title,
-      "description" -> project.description)
-    val result = projectCollection.update(query, update, upsert = true)
+  def createOrUpdateProject(project: Project): String = {
+    if (project.id.trim() != "") {
+      val query = MongoDBObject("id" -> project.id)
+      val update = $set("title" -> project.title,
+        "description" -> project.description)
+      val result = projectCollection.update(query, update, upsert = true)
+      println("Number of projects updated: " + result.getN)
+      result.getUpsertedId.toString
+    } else {
+      val obj = MongoDBObject("title" -> project.title,
+        "description" -> project.description)
+      projectCollection.insert(obj)
+      val id = obj.get("_id")
+      println(s"Project created with id ${id}")
+      id.toString
+    }
+  }
 
-    println("Number of projects updated: " + result.getN)
-    for (c <- projectCollection.find) println(c)
+  def addProjectUser(projectId: String, userId: String) = {
+    val query = MongoDBObject("projectId" -> projectId, "userId" -> userId)
+    val update = $set("projectId" -> projectId, "userId" -> userId)
+    val result = projectUsersCollection.update(query, update, true)
+
+    println(s"Added user $userId to project $projectId")
+    for (c <- projectUsersCollection.find) println(c)
     result.getN
   }
 
-  // TODO only add or delete
-  def createOrUpdateProjectUsers(projectUsers: ProjectUsers) = {
-    val query = MongoDBObject("projectId" -> projectUsers.projectId)
-    val update = $set("projectId" -> projectUsers.projectId, "userId" -> projectUsers.userId)
-    val result = projectUsersCollection.update(query, update, upsert = true)
+  def deleteProjectUser(projectId: String, userId: String) = {
+    val query = MongoDBObject("projectId" -> projectId, "userId" -> userId)
+    val result = projectUsersCollection.remove(query)
 
-    println("Number of projectusers updated: " + result.getN)
+    println("Number removed: " + result.getN)
     for (c <- projectUsersCollection.find) println(c)
-    result.getN
   }
 
   def getProjectIdsByUser(userId: String): List[ProjectUsers] = {
@@ -114,6 +129,15 @@ object MongoFactory {
     val opt = collection.findAndRemove(MongoDBObject("id" -> id))
     opt match {
       case Some(value: DBObject) => Option(convertDbObjectToTodo(value))
+      case None => None
+    }
+  }
+
+  def deleteProjectById(id: String): Option[Project] = {
+    // TODO Also delete the todos and projectusers with id and query _id ObjectID
+    val opt = projectCollection.findAndRemove(MongoDBObject("id" -> id))
+    opt match {
+      case Some(value: DBObject) => Option(convertDbObjectToProject(value))
       case None => None
     }
   }

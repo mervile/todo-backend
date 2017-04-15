@@ -6,7 +6,7 @@ import spray.json.DefaultJsonProtocol
 
 trait TodosJSONSupport extends SprayJsonSupport with DefaultJsonProtocol {
   implicit val todoFormat = jsonFormat5(Todo)
-  implicit val project = jsonFormat3(Project)
+  implicit val projectFormat = jsonFormat3(Project)
   implicit val projectUsers = jsonFormat2(ProjectUsers)
   implicit val projectswithtodosFormat = jsonFormat2(ProjectWithTodos)
   implicit val loginResponseFormat = jsonFormat1(LoginResponse)
