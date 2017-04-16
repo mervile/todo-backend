@@ -2,6 +2,7 @@ package my.todos.utils
 
 import com.github.nscala_time.time.TypeImports
 import com.mongodb.casbah.Imports._
+import com.mongodb.casbah.commons.ValidBSONType.ObjectId
 import my.todos.models._
 
 object MongoFactory {
@@ -134,10 +135,14 @@ object MongoFactory {
   }
 
   def deleteProjectById(id: String): Option[Project] = {
-    // TODO Also delete the todos and projectusers with id and query _id ObjectID
-    val opt = projectCollection.findAndRemove(MongoDBObject("id" -> id))
+    val opt = projectCollection.findAndRemove(MongoDBObject("_id" -> new ObjectId(id)))
     opt match {
-      case Some(value: DBObject) => Option(convertDbObjectToProject(value))
+      case Some(value: DBObject) => {
+        val query = MongoDBObject("projectId" -> id)
+        collection.remove(query)
+        projectUsersCollection.remove(query)
+        Option(convertDbObjectToProject(value))
+      }
       case None => None
     }
   }

@@ -43,7 +43,7 @@ class ProjectServiceRoute(val todoService: ActorRef, val projectService: ActorRe
             } ~
             delete {
               parameters('id.as[String]) { (id) =>
-                onSuccess((todoService ? DeleteProjectById(id)).mapTo[Option[Project]]) { maybeDeleted =>
+                onSuccess((projectService ? DeleteProjectById(id)).mapTo[Option[Project]]) { maybeDeleted =>
                   maybeDeleted match {
                     case Some(deleted) => complete(StatusCodes.OK, deleted)
                     case None => complete(StatusCodes.NotFound, s"Couldn't find project by id ${id}")
