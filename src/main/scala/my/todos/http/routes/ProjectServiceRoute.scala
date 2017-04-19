@@ -23,7 +23,7 @@ class ProjectServiceRoute(val todoService: ActorRef, val projectService: ActorRe
           pathEndOrSingleSlash {
             get {
               val future = projectService ? GetProjectsByUser(user.id.get)
-              onSuccess(future.mapTo[List[ProjectWithTodos]]) { res =>
+              onSuccess(future.mapTo[List[ProjectWithTodosAndUsers]]) { res =>
                 complete(res)
               }
             }

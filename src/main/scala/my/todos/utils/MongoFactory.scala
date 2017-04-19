@@ -16,7 +16,7 @@ object MongoFactory {
   def findUser(username: String): Option[ApiUser] = {
     val opt = userCollection.findOne(MongoDBObject("username" -> username))
     opt match {
-      case Some(value: DBObject) => Option(convertDbObjectToUser(value))
+      case Some(value: DBObject) => Option(convertDbObjectToApiUser(value))
       case None => None
     }
   }
@@ -106,22 +106,33 @@ object MongoFactory {
     }
   }
 
+  def getProjectUsers(projectId: ObjectId): List[User] = {
+    val result = projectUsersCollection.find(MongoDBObject("projectId" -> projectId.toString))
+    val maybeUsers = for {
+      obj <- result
+      user <- userCollection.findOne(MongoDBObject("_id" -> new ObjectId(obj.getAs[String]("userId").get)))
+    } yield user
+
+    (for (obj <- maybeUsers) yield convertDbObjectToUser(obj)).toList
+  }
+
   def getTodosByProject(projectId: ObjectId): List[Todo] = {
     val todos = collection.find(MongoDBObject("projectId" -> projectId.toString))
     (for (obj <- todos) yield convertDbObjectToTodo(obj)).toList
   }
 
-  def getProjectsByUser(userId: String): List[ProjectWithTodos] = {
+  def getProjectsByUser(userId: String): List[ProjectWithTodosAndUsers] = {
     for {
       pu: ProjectUsers <- getProjectIdsByUser(userId)
-      pwt: ProjectWithTodos <- getProjectWithTodos(pu.projectId)
+      pwt: ProjectWithTodosAndUsers <- getProjectWithTodosAndUsers(pu.projectId)
     } yield pwt
   }
 
-  def getProjectWithTodos(projectId: String): Option[ProjectWithTodos] = {
+  def getProjectWithTodosAndUsers(projectId: String): Option[ProjectWithTodosAndUsers] = {
     val objId = new ObjectId(projectId)
     getProjectById(objId) match {
-      case Some(project) => Option(ProjectWithTodos(project, getTodosByProject(objId)))
+      case Some(project) => Option(ProjectWithTodosAndUsers(project,
+        getTodosByProject(objId), getProjectUsers(objId)))
       case None          => None
     }
   }
@@ -147,7 +158,9 @@ object MongoFactory {
     }
   }
 
-  def convertDbObjectToUser(obj: DBObject): ApiUser = {
+  def getUsers(): List[User] = (for (record <- userCollection.find()) yield (convertDbObjectToUser(record))).toList
+
+  def convertDbObjectToApiUser(obj: DBObject): ApiUser = {
     val username = obj.getAs[String]("username").getOrElse("")
     val hashedPassword = obj.getAs[String]("hashedPassword")
     val id = obj.getAs[ObjectId]("_id").getOrElse("-1").toString()
@@ -175,5 +188,11 @@ object MongoFactory {
     val projectId = obj.getAs[String]("projectId").getOrElse("58c14984bb8a9fe5574b08ba")
     val userId = obj.getAs[String]("userId").getOrElse("-1")
     ProjectUsers(projectId, userId)
+  }
+
+  def convertDbObjectToUser(obj: DBObject): User = {
+    val username = obj.getAs[String]("username").getOrElse("?")
+    val id = obj.getAs[ObjectId]("_id").getOrElse("?").toString
+    User(id, username)
   }
 }

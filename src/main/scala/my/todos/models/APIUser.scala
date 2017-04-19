@@ -26,3 +26,7 @@ case class CreateUser(user: ApiUser)
 case class UsernameValidationResponse(username: String, isValid: Boolean)
 
 case class UsernameExistsException() extends Exception
+
+case class User(id: String, username: String)
+
+case object GetUsers

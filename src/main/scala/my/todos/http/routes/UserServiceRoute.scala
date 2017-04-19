@@ -69,5 +69,16 @@ class UserServiceRoute(val userService: ActorRef)
           }
         }
       }
+    } ~
+    pathPrefix("api") {
+      path("users") {
+        pathEndOrSingleSlash {
+          get {
+            onSuccess((userService ? GetUsers).mapTo[List[User]]) { users =>
+              complete(users)
+            }
+          }
+        }
+      }
     }
 }

@@ -15,6 +15,7 @@ class UserServiceActor extends Actor with ActorLogging {
   def receive = {
     case FindUser(username)        => sender ! MongoFactory.findUser(username)
     case CreateUser(user)          => sender ! MongoFactory.createUser(user)
+    case GetUsers                  => sender ! MongoFactory.getUsers()
     case _                         => println("huh?")
   }
 }

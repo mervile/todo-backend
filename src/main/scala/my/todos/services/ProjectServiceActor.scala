@@ -16,7 +16,7 @@ class ProjectServiceActor extends Actor with ActorLogging {
     case CreateOrUpdateProject(project)           => sender ! MongoFactory.createOrUpdateProject(project)
     case DeleteProjectById(id)                    => sender ! MongoFactory.deleteProjectById(id)
     case GetProjectsByUser(userId)                => sender ! MongoFactory.getProjectsByUser(userId)
-    case GetProjectWithTodos(projectId)           => sender ! MongoFactory.getProjectWithTodos(projectId)
+    case GetProjectWithTodosAndUsers(projectId)   => sender ! MongoFactory.getProjectWithTodosAndUsers(projectId)
     case AddProjectUser(projectId, userId)        => sender ! MongoFactory.addProjectUser(projectId, userId)
     case DeleteProjectUser(projectId, userId)     => sender ! MongoFactory.deleteProjectUser(projectId, userId)
     case _                                        => println("huh?")
