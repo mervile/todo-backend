@@ -32,11 +32,13 @@ class ProjectServiceRoute(val todoService: ActorRef, val projectService: ActorRe
         path("project") {
           pathEndOrSingleSlash {
             post {
-              entity(as[Project]) { project =>
-                onSuccess((projectService ? CreateOrUpdateProject(project))) { id =>
+              entity(as[ProjectWithTodosAndUsers]) { pwts =>
+                onSuccess((projectService ? CreateOrUpdateProject(pwts.project))) { id =>
                   onSuccess(projectService ? AddProjectUser(id.toString, user.id.get)) { _ =>
-                    val newProject: Project = Project(id.toString, project.title, project.description)
-                    complete(StatusCodes.Created, newProject)
+                    pwts.users.map((usr:User) => projectService ! AddProjectUser(id.toString, usr.id))
+                    val newProject: Project = Project(id.toString, pwts.project.title, pwts.project.description)
+                    val projectWithTodosAndUsers = ProjectWithTodosAndUsers(newProject, pwts.todos, pwts.users)
+                    complete(StatusCodes.Created, projectWithTodosAndUsers)
                   }
                 }
               }
