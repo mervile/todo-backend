@@ -13,12 +13,14 @@ object ProjectServiceActor {
 
 class ProjectServiceActor extends Actor with ActorLogging {
   def receive = {
-    case CreateOrUpdateProject(project)           => sender ! MongoFactory.createOrUpdateProject(project)
+    case CreateProject(project)                   => sender ! MongoFactory.createProject(project)
+    case UpdateProject(project)                   => sender ! MongoFactory.updateProject(project)
     case DeleteProjectById(id)                    => sender ! MongoFactory.deleteProjectById(id)
     case GetProjectsByUser(userId)                => sender ! MongoFactory.getProjectsByUser(userId)
     case GetProjectWithTodosAndUsers(projectId)   => sender ! MongoFactory.getProjectWithTodosAndUsers(projectId)
     case AddProjectUser(projectId, userId)        => sender ! MongoFactory.addProjectUser(projectId, userId)
     case DeleteProjectUser(projectId, userId)     => sender ! MongoFactory.deleteProjectUser(projectId, userId)
+    case GetProjectUsers(projectId)               => sender ! MongoFactory.getProjectUsers(projectId)
     case _                                        => println("huh?")
   }
 }

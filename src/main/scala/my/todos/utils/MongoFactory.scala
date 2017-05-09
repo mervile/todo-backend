@@ -55,22 +55,22 @@ object MongoFactory {
     result.getN
   }
 
-  def createOrUpdateProject(project: Project): String = {
-    if (project.id.trim() != "") {
-      val query = MongoDBObject("id" -> project.id)
-      val update = $set("title" -> project.title,
-        "description" -> project.description)
-      val result = projectCollection.update(query, update, upsert = true)
-      println("Number of projects updated: " + result.getN)
-      result.getUpsertedId.toString
-    } else {
-      val obj = MongoDBObject("title" -> project.title,
-        "description" -> project.description)
-      projectCollection.insert(obj)
-      val id = obj.get("_id")
-      println(s"Project created with id ${id}")
-      id.toString
-    }
+  def createProject(project: Project): String = {
+    val obj = MongoDBObject("title" -> project.title,
+      "description" -> project.description)
+    projectCollection.insert(obj)
+    val id = obj.get("_id")
+    println(s"Project created with id ${id}")
+    id.toString
+  }
+
+  def updateProject(project: Project): String = {
+    val query = MongoDBObject("_id" -> new ObjectId(project.id))
+    val update = $set("title" -> project.title,
+      "description" -> project.description)
+    val result = projectCollection.update(query, update, upsert = true)
+    println("Number of projects updated: " + result.getN)
+    project.id
   }
 
   def addProjectUser(projectId: String, userId: String) = {
@@ -106,8 +106,8 @@ object MongoFactory {
     }
   }
 
-  def getProjectUsers(projectId: ObjectId): List[User] = {
-    val result = projectUsersCollection.find(MongoDBObject("projectId" -> projectId.toString))
+  def getProjectUsers(projectId: String): List[User] = {
+    val result = projectUsersCollection.find(MongoDBObject("projectId" -> projectId))
     val maybeUsers = for {
       obj <- result
       user <- userCollection.findOne(MongoDBObject("_id" -> new ObjectId(obj.getAs[String]("userId").get)))
@@ -132,7 +132,7 @@ object MongoFactory {
     val objId = new ObjectId(projectId)
     getProjectById(objId) match {
       case Some(project) => Option(ProjectWithTodosAndUsers(project,
-        getTodosByProject(objId), getProjectUsers(objId)))
+        getTodosByProject(objId), getProjectUsers(objId.toString)))
       case None          => None
     }
   }

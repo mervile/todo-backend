@@ -33,12 +33,27 @@ class ProjectServiceRoute(val todoService: ActorRef, val projectService: ActorRe
           pathEndOrSingleSlash {
             post {
               entity(as[ProjectWithTodosAndUsers]) { pwts =>
-                onSuccess((projectService ? CreateOrUpdateProject(pwts.project))) { id =>
-                  onSuccess(projectService ? AddProjectUser(id.toString, user.id.get)) { _ =>
-                    pwts.users.map((usr:User) => projectService ! AddProjectUser(id.toString, usr.id))
-                    val newProject: Project = Project(id.toString, pwts.project.title, pwts.project.description)
-                    val projectWithTodosAndUsers = ProjectWithTodosAndUsers(newProject, pwts.todos, pwts.users)
-                    complete(StatusCodes.Created, projectWithTodosAndUsers)
+                if (pwts.project.id.trim().length > 0) {
+                  // Update
+                  onSuccess((projectService ? UpdateProject(pwts.project))) { id =>
+                    onSuccess((projectService ? GetProjectUsers(pwts.project.id))) { res =>
+                      val users:List[User] = res.asInstanceOf[List[User]]
+                      val toRemove = users.filterNot(pwts.users.contains(_))
+                      val toAdd = pwts.users.filterNot(users.contains(_))
+                      toRemove.map((usr:User) => projectService ! DeleteProjectUser(pwts.project.id, usr.id))
+                      toAdd.map((usr:User) => projectService ! AddProjectUser(pwts.project.id, usr.id))
+                      complete(StatusCodes.OK, pwts)
+                    }
+                  }
+                } else {
+                  // Create
+                  onSuccess((projectService ? CreateProject(pwts.project))) { id =>
+                    onSuccess(projectService ? AddProjectUser(id.toString, user.id.get)) { _ =>
+                      pwts.users.map((usr:User) => projectService ! AddProjectUser(id.toString, usr.id))
+                      val newProject: Project = Project(id.toString, pwts.project.title, pwts.project.description)
+                      val projectWithTodosAndUsers = ProjectWithTodosAndUsers(newProject, pwts.todos, pwts.users)
+                      complete(StatusCodes.Created, projectWithTodosAndUsers)
+                    }
                   }
                 }
               }
